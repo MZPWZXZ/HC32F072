@@ -47,6 +47,28 @@
   `cmd /c build.bat`(配置+全量编译 exit=0,产物 elf/hex/bin/map 生成,
   size: text 12532 / data 84 / bss 336),均通过。
 
+### 2026-09-06 [004] Bootloader 分支:Flash 分区 + 双镜像工程骨架
+
+- 需求:新建 Bootloader 分支,串口升级 App。
+- 决策(已确认):Bootloader 32KB@0x0,App @0x8000(96KB);
+  自定义串口协议 + Python 上位机;App 内串口命令进入引导。
+- 改动:
+  - `src/iap_shared.h`:新增 Boot/App 共享常量(分区/魔数/扇区粒度),要求
+    与 startup 下链接脚本一一对应;
+  - `startup/hc32f072ka_app.ld`:App 镜像 @0x8000 96KB;
+  - `startup/hc32f072ka_boot.ld`:Boot 镜像 @0x0 32KB;两者 RAM 运行区统一
+    从 0x20000040 开始(头部 0x40B 保留给 IAP 引导标志);
+  - `CMakeLists.txt`:重构为双目标(hc32f072ka_boot / hc32f072ka_app),
+    公共 BSP 收进 hc32f072_core;syscalls.c 直接编入各可执行文件
+    (避免静态库链接顺序导致 _sbrk 无法解析);dist 输出两组 hex/bin;
+  - `bootloader/main.c`:最小骨架——魔数判断停留在引导 / App 向量表合法则
+    跳转 / 非法则停留并闪烁 LED;
+  - 删除原单镜像链接脚本 `startup/hc32f072ka_flash.ld`(由 app/boot 两份替代);
+  - 依据官方“FLASH 操作说明”:扇区 512B、擦写代码须位于 0~32K(Boot 区
+    满足)、寄存器写保护需 BYPASS 序列、flash 内执行擦除硬件自动等待 BUSY。
+- 验证:双目标编译零错误零警告;boot hex 基址 0x0、app hex 基址 0x8000;
+  size boot text 12740 / app text 12532。
+
 ### 2026-09-06 [003] 编译产物 hex/bin 改输出到根目录 dist(与 build 同级)
 
 - 需求:希望新建 `dist/` 文件夹专门存放编译后的 bin/hex,与 `build/` 同级。

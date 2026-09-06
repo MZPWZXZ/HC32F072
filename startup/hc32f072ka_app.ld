@@ -1,26 +1,27 @@
 /*
- * HC32F072KA 链接脚本
+ * HC32F072KA App 镜像链接脚本(供 Bootloader 通过串口 IAP 升级)
  *
- * 存储布局(来自 HC32F072 数据手册与官方 DDL 模板):
- *   FLASH: 128KB,起始 0x00000000
- *   SRAM : 16KB, 起始 0x20000000
+ * 布局(见 src/iap_shared.h):
+ *   FLASH : App @0x00008000, 96KB(0x00008000 ~ 0x0001FFFF)
+ *   RAM   : 16KB,但头部 0x40 字节保留给 IAP 引导标志,
+ *           运行区从 0x20000040 开始(与 Bootloader 链接脚本一致)
  *
- * 无外部晶振、无 bootloader,向量表直接从 Flash 0x0 启动。
+ * 对应目标:CMake 的 hc32f072ka_app
  */
 ENTRY(Reset_Handler)
 
 MEMORY
 {
-    FLASH (rx)  : ORIGIN = 0x00000000, LENGTH = 128K
-    RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 16K
+    FLASH (rx)  : ORIGIN = 0x00008000, LENGTH = 96K
+    RAM   (rwx) : ORIGIN = 0x20000040, LENGTH = 16K - 0x40
 }
 
-/* 栈顶 = RAM 最高地址(Cortex-M 向下生长的满减栈) */
+/* 栈顶 = RAM 可用区顶部(Cortex-M 向下生长的满减栈) */
 _estack = ORIGIN(RAM) + LENGTH(RAM);
 
 SECTIONS
 {
-    /* 中断向量表,固定放在 Flash 起始,见 startup/startup_hc32f072.S */
+    /* 中断向量表:App 向量表随镜像位于 0x8000,Reset_Handler 会写 VTOR 指向此处 */
     .isr_vector :
     {
         . = ALIGN(8);
@@ -61,8 +62,7 @@ SECTIONS
         _ebss = .;
     } > RAM
 
-    /* 堆边界符号(当前工程未提供 _sbrk,newlib-nano 路径不使用堆;
-     * 若后续引入 malloc 系调用,需自行实现 _sbrk 并限定在 [_heap_start, _heap_end)) */
+    /* 堆边界符号(当前工程未使用堆,详见 main 分支的说明) */
     . = ALIGN(8);
     _heap_start = .;
     _heap_end   = _estack;
@@ -71,7 +71,6 @@ SECTIONS
     _end = .;
     PROVIDE(end = .);
 
-    /* 丢弃无需保留的异常展开/栈回溯表(裸机不使用) */
     /DISCARD/ :
     {
         *(.ARM.exidx*)
