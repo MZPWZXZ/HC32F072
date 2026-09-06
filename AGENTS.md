@@ -36,6 +36,7 @@
 │   └── bsp/                 board.h 引脚配置与板级驱动
 ├── bootloader/              Bootloader(main.c、iap_proto.{c,h})
 ├── docs/iap_protocol.md     串口 IAP 协议与升级说明
+├── scripts/git-hooks/post-commit  提交后自动推送钩子
 └── third_party/             第三方代码(只读)
     ├── cmsis/               ARM CMSIS 5.9.0 core 头文件
     └── hc32f072_ddl/        官方 DDL Rev1.1.1 裁剪拷贝
@@ -100,7 +101,13 @@ cmake --build build
    - 提交信息遵循 Conventional Commits 风格
      (`feat:`, `fix:`, `docs:`, `build:`, `chore:`, `refactor:`,
      `test:`),正文简述改动与验证结果;
-   - 一次提交只包含一个逻辑变更。
+   - 一次提交只包含一个逻辑变更;
+   - **提交后自动推送**:仓库启用 `core.hooksPath = scripts/git-hooks`,
+     每次 `git commit` 成功后会由 post-commit 钩子自动 `git push` 到当前
+     分支的上游(失败仅提示,不阻断本地提交);
+     - 新克隆的仓库需执行一次:
+       `git config core.hooksPath scripts/git-hooks`;
+     - 钩子脚本见 `scripts/git-hooks/post-commit`,改动需登记并保持 ASCII;
 
 ## 5. third_party 纪律(只读)
 

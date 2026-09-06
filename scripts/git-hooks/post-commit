@@ -1,0 +1,34 @@
+#!/bin/sh
+# ============================================================================
+# scripts/git-hooks/post-commit
+#   Auto-push after every commit (works for any branch with an upstream).
+#
+# Install (once per clone):
+#   git config core.hooksPath scripts/git-hooks
+#
+# Notes:
+#   - post-commit hook exit status never affects the commit itself, so a
+#     failed push only prints a hint; commit stays local until next push.
+#   - ASCII-only output on purpose (runs under various shells/consoles).
+# ============================================================================
+
+branch=$(git symbolic-ref --short -q HEAD 2>/dev/null)
+if [ -z "$branch" ]; then
+    echo "[git-hook] detached HEAD, skip auto-push"
+    exit 0
+fi
+
+remote=$(git config --get "branch.$branch.remote" 2>/dev/null)
+if [ -z "$remote" ]; then
+    echo "[git-hook] branch '$branch' has no upstream remote, skip auto-push"
+    exit 0
+fi
+
+echo "[git-hook] auto-push: git push $remote HEAD:$branch"
+if git push "$remote" "HEAD:$branch" 2>&1; then
+    echo "[git-hook] pushed OK"
+else
+    echo "[git-hook] push FAILED (commit kept locally, retry: git push)"
+fi
+
+exit 0

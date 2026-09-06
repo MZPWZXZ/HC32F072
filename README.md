@@ -80,6 +80,7 @@ LED = PC13 占位),按实际原理图修改即可。Bootloader 与 App 共用同
 │   └── bsp/                 board.h、bsp_sysclk/bsp_uart/bsp_led
 ├── bootloader/              Bootloader(main + iap_proto 协议模块)
 ├── docs/iap_protocol.md     串口 IAP 协议与升级说明
+├── scripts/git-hooks/       post-commit(提交后自动推送)钩子
 └── third_party/             第三方(只读)
     ├── cmsis/               ARM CMSIS 5.9.0
     └── hc32f072_ddl/        官方 DDL Rev1.1.1 裁剪子集
@@ -101,6 +102,18 @@ Bootloader 与 App 使用完全相同的时钟初始化代码。
 SWD(PA13/PA14 + nRST)烧录/调试。注意:
 - Bootloader 与 App 两个镜像地址不同,务必选择对应 hex;
 - 升级/调试过程中 App 若运行异常,可通过 SWD 重新烧录任意镜像恢复。
+
+## 提交与自动推送
+
+- 本仓库启用了版本化的 post-commit 钩子(`scripts/git-hooks/post-commit`):
+  每次 `git commit` 成功后自动把当前分支推送到其上游(origin);
+- 新克隆后启用一次即可生效:
+
+```sh
+git config core.hooksPath scripts/git-hooks
+```
+
+- 推送失败不会影响本地提交,会打印提示,可稍后手动 `git push` 补推。
 
 ## 许可与第三方
 

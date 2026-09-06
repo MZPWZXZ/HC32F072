@@ -47,6 +47,21 @@
   `cmd /c build.bat`(配置+全量编译 exit=0,产物 elf/hex/bin/map 生成,
   size: text 12532 / data 84 / bss 336),均通过。
 
+### 2026-09-06 [003] 编译产物 hex/bin 改输出到根目录 dist(与 build 同级)
+
+- 需求:希望新建 `dist/` 文件夹专门存放编译后的 bin/hex,与 `build/` 同级。
+- 改动:
+  - `CMakeLists.txt`:新增 `DIST_DIR = ${CMAKE_SOURCE_DIR}/dist`;
+    后处理命令先 `make_directory` 创建 dist(不存在时自动建),再把
+    `.hex`/`.bin` 输出到 `dist/`;`.elf`/`.map` 仍留在 `build/`;
+  - `build.bat`:新增 `DIST_DIR`;`clean` 参数同时删除 build 与 dist;
+    结束回显区分 elf/map(build/)与 hex/bin(dist/);
+  - `.gitignore`:忽略 `/dist/`(产物不入库);
+  - 文档:README.md/AGENTS.md 的产物说明、目录结构、烧录路径同步更新。
+- 验证:`cmd /c build.bat clean` 同时清除 build/dist 后,执行
+  `cmd /c build.bat` 全量编译 exit=0,`dist/hc32f072ka.hex` 与
+  `dist/hc32f072ka.bin` 生成于仓库根目录(与 build 同级),校验无误。
+
 ### 2026-09-06 [004] Bootloader 分支:Flash 分区 + 双镜像工程骨架
 
 - 需求:新建 Bootloader 分支,串口升级 App。
@@ -106,17 +121,17 @@
 - 验证:删除后重新编译双镜像零错误零警告;grep 全库无 `iap_upload`/
   `pyserial`/`tools/` 残留。
 
-### 2026-09-06 [003] 编译产物 hex/bin 改输出到根目录 dist(与 build 同级)
+### 2026-09-06 [007] 每次提交后自动推送(版本化 git 钩子)
 
-- 需求:希望新建 `dist/` 文件夹专门存放编译后的 bin/hex,与 `build/` 同级。
+- 需求:每次提交后自动推送到远程仓库。
 - 改动:
-  - `CMakeLists.txt`:新增 `DIST_DIR = ${CMAKE_SOURCE_DIR}/dist`;
-    后处理命令先 `make_directory` 创建 dist(不存在时自动建),再把
-    `.hex`/`.bin` 输出到 `dist/`;`.elf`/`.map` 仍留在 `build/`;
-  - `build.bat`:新增 `DIST_DIR`;`clean` 参数同时删除 build 与 dist;
-    结束回显区分 elf/map(build/)与 hex/bin(dist/);
-  - `.gitignore`:忽略 `/dist/`(产物不入库);
-  - 文档:README.md/AGENTS.md 的产物说明、目录结构、烧录路径同步更新。
-- 验证:`cmd /c build.bat clean` 同时清除 build/dist 后,执行
-  `cmd /c build.bat` 全量编译 exit=0,`dist/hc32f072ka.hex` 与
-  `dist/hc32f072ka.bin` 生成于仓库根目录(与 build 同级),校验无误。
+  - 新增 `scripts/git-hooks/post-commit`:提交成功后自动把当前分支推送到
+    其上游 remote(无上游/分离 HEAD 时跳过;推送失败仅提示不阻断提交;
+    脚本保持 ASCII);
+  - AGENTS.md “修改纪律”新增“提交后自动推送”条款,并说明新克隆需执行
+    `git config core.hooksPath scripts/git-hooks`;
+  - README.md 补充“提交与自动推送”说明与 scripts/ 目录树条目;
+  - 本机仓库已执行 `git config core.hooksPath scripts/git-hooks` 启用。
+- 验证:本条目提交后由钩子自动推送成功(远端引用与本地一致,
+  见提交输出 [git-hook] pushed OK)。
+
