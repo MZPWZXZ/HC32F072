@@ -5,10 +5,11 @@ rem  build.bat - one-click build helper for HC32F072KA
 rem  (CMake + MinGW Makefiles + arm-none-eabi-gcc)
 rem
 rem  Usage:
-rem    build.bat             configure + build Debug   -> build\hc32f072ka.elf
+rem    build.bat             configure + build Debug
+rem                          -> build\hc32f072ka.elf/.map, dist\hc32f072ka.hex/.bin
 rem    build.bat release     configure + build Release (-O2)
 rem    build.bat minsize     configure + build MinSizeRel (-Os)
-rem    build.bat clean       remove build directory and exit
+rem    build.bat clean       remove build and dist directories and exit
 rem
 rem  Tool auto-detection order:
 rem    1) environment override: HC32F072_CMAKE / HC32F072_MAKE
@@ -22,6 +23,7 @@ set "SCRIPT_DIR=%~dp0"
 rem strip the trailing backslash of %~dp0 so quoted paths do not end with \"
 set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 set "BUILD_DIR=%SCRIPT_DIR%\build"
+set "DIST_DIR=%SCRIPT_DIR%\dist"
 set "BUILD_TYPE=Debug"
 set "TOOLCHAIN_FILE=%SCRIPT_DIR%\cmake\arm-none-eabi-gcc.cmake"
 set "CMAKE_EXE="
@@ -31,7 +33,9 @@ set "GCC_DIR="
 rem ------------------------- parse command line args -------------------------
 if /I "%~1"=="clean" (
     if exist "%BUILD_DIR%" rmdir /s /q "%BUILD_DIR%"
+    if exist "%DIST_DIR%" rmdir /s /q "%DIST_DIR%"
     echo [build] removed %BUILD_DIR%
+    echo [build] removed %DIST_DIR%
     exit /b 0
 )
 if /I "%~1"=="release" set "BUILD_TYPE=Release"
@@ -88,9 +92,9 @@ if errorlevel 1 (
 )
 
 echo.
-echo [build] OK. Artifacts in %BUILD_DIR%:
-echo         %BUILD_DIR%\hc32f072ka.elf
-echo         %BUILD_DIR%\hc32f072ka.hex
-echo         %BUILD_DIR%\hc32f072ka.bin
-echo         %BUILD_DIR%\hc32f072ka.map
+echo [build] OK. Artifacts:
+echo         elf  : %BUILD_DIR%\hc32f072ka.elf
+echo         map  : %BUILD_DIR%\hc32f072ka.map
+echo         hex  : %DIST_DIR%\hc32f072ka.hex
+echo         bin  : %DIST_DIR%\hc32f072ka.bin
 exit /b 0

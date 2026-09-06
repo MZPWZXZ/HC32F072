@@ -46,3 +46,18 @@
 - 验证:在 PowerShell 中执行 `cmd /c build.bat clean`(清理成功)与
   `cmd /c build.bat`(配置+全量编译 exit=0,产物 elf/hex/bin/map 生成,
   size: text 12532 / data 84 / bss 336),均通过。
+
+### 2026-09-06 [003] 编译产物 hex/bin 改输出到根目录 dist(与 build 同级)
+
+- 需求:希望新建 `dist/` 文件夹专门存放编译后的 bin/hex,与 `build/` 同级。
+- 改动:
+  - `CMakeLists.txt`:新增 `DIST_DIR = ${CMAKE_SOURCE_DIR}/dist`;
+    后处理命令先 `make_directory` 创建 dist(不存在时自动建),再把
+    `.hex`/`.bin` 输出到 `dist/`;`.elf`/`.map` 仍留在 `build/`;
+  - `build.bat`:新增 `DIST_DIR`;`clean` 参数同时删除 build 与 dist;
+    结束回显区分 elf/map(build/)与 hex/bin(dist/);
+  - `.gitignore`:忽略 `/dist/`(产物不入库);
+  - 文档:README.md/AGENTS.md 的产物说明、目录结构、烧录路径同步更新。
+- 验证:`cmd /c build.bat clean` 同时清除 build/dist 后,执行
+  `cmd /c build.bat` 全量编译 exit=0,`dist/hc32f072ka.hex` 与
+  `dist/hc32f072ka.bin` 生成于仓库根目录(与 build 同级),校验无误。

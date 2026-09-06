@@ -23,6 +23,7 @@
 ├── .gitattributes           统一 UTF-8 + LF
 ├── CMakeLists.txt           顶层构建脚本
 ├── build.bat                Windows 一键构建脚本
+├── dist/                    烧录文件输出目录(hex/bin,自动生成,不入库)
 ├── cmake/                   CMake 交叉编译工具链文件
 ├── config/                  ddl_device.h(DDL 系列/封装配置)
 ├── startup/                 GCC 启动文件 + 链接脚本
@@ -55,7 +56,9 @@ cmake --build build
 > (等价于上面的 cmake 命令,自动探测 cmake/mingw32-make/arm 工具链;
 > 参数:`clean` 清理、`release`/`minsize` 选择构建类型)。
 
-产物:build 目录下 `hc32f072ka.elf / .hex / .bin / .map`。
+产物分两处存放(`dist/` 与 `build/` 同级,位于仓库根目录):
+`dist/` 下为烧录用 `hc32f072ka.hex` / `hc32f072ka.bin`,
+`build/` 下为调试用 `hc32f072ka.elf` 与 `hc32f072ka.map`。
 
 **“测试没有问题”的定义**(本仓库开发期无法上电运行,以编译级验证为准):
 

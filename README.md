@@ -31,16 +31,16 @@ cmake --build build
 > **Windows 一键编译**:直接双击或运行根目录的 `build.bat`
 > (自动探测 cmake / mingw32-make / arm-none-eabi-gcc,无需手敲命令)。
 > 可用参数:`build.bat`(Debug)、`build.bat release`(-O2)、
-> `build.bat minsize`(-Os)、`build.bat clean`(清理 build 目录)。
+> `build.bat minsize`(-Os)、`build.bat clean`(清理 build 与 dist 目录)。
 
-构建产物位于 `build/`:
+构建产物分两处存放(`dist/` 与 `build/` 同级,位于仓库根目录):
 
-| 文件 | 说明 |
-| --- | --- |
-| `hc32f072ka.elf` | 可调试 ELF |
-| `hc32f072ka.hex` | Intel HEX(烧录用) |
-| `hc32f072ka.bin` | 裸二进制(烧录用) |
-| `hc32f072ka.map` | 链接 MAP(内存占用检查) |
+| 目录 | 文件 | 说明 |
+| --- | --- | --- |
+| `dist/` | `hc32f072ka.hex` | Intel HEX(烧录用),编译后自动生成 |
+| `dist/` | `hc32f072ka.bin` | 裸二进制(烧录用),编译后自动生成 |
+| `build/` | `hc32f072ka.elf` | 可调试 ELF |
+| `build/` | `hc32f072ka.map` | 链接 MAP(内存占用检查) |
 
 ## 板级配置(重要)
 
@@ -70,6 +70,7 @@ cmake --build build
 ├── CHANGELOG.md             修改记录
 ├── CMakeLists.txt           顶层构建
 ├── build.bat                Windows 一键构建脚本
+├── dist/                    烧录文件输出目录(hex/bin,自动生成,不入库)
 ├── cmake/                   GCC 交叉工具链文件
 ├── config/ddl_device.h      DDL 系列/封装定义
 ├── startup/                 GCC 启动文件与链接脚本(128K Flash/16K RAM)
@@ -95,7 +96,7 @@ RCL(内部低速 RC 32.8/38.4kHz)、PLL(输出 8~48MHz,输入须来自 RCH 或 X
 ## 烧录与调试
 
 芯片支持 SWD(PA13/PA14 + nRST)。可使用 J-Link / DAP-Link 等烧录
-`hc32f072ka.hex`(注意保持芯片为 SWD 模式,勿把 SWD 引脚复用为 GPIO)。
+`dist/hc32f072ka.hex`(注意保持芯片为 SWD 模式,勿把 SWD 引脚复用为 GPIO)。
 
 ## 许可与第三方
 

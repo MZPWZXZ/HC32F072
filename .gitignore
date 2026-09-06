@@ -1,5 +1,8 @@
 # ---- 构建产物 ----
+# build/:中间产物(elf/map/obj 等);dist/:烧录文件(hex/bin),与 build 同级,
+# 两者均由编译自动生成,不入库
 /build/
+/dist/
 /out/
 *.o
 *.elf

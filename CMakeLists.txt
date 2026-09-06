@@ -99,16 +99,19 @@ target_link_options(${TARGET}.elf PRIVATE
     -T${LINKER_SCRIPT}
 )
 
-# ---- 后处理:hex / bin / 内存占用打印 ----
+# ---- 后处理:烧录文件(hex/bin)输出到根目录 dist/,与 build 同级 ----
+set(DIST_DIR ${CMAKE_SOURCE_DIR}/dist)
+
 set(ELF_FILE $<TARGET_FILE:${TARGET}.elf>)
-set(HEX_FILE ${CMAKE_BINARY_DIR}/${TARGET}.hex)
-set(BIN_FILE ${CMAKE_BINARY_DIR}/${TARGET}.bin)
+set(HEX_FILE ${DIST_DIR}/${TARGET}.hex)
+set(BIN_FILE ${DIST_DIR}/${TARGET}.bin)
 
 add_custom_command(TARGET ${TARGET}.elf POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${DIST_DIR}"
     COMMAND ${CMAKE_OBJCOPY} -O ihex   ${ELF_FILE} ${HEX_FILE}
     COMMAND ${CMAKE_OBJCOPY} -O binary ${ELF_FILE} ${BIN_FILE}
     COMMAND ${CMAKE_SIZE} ${ELF_FILE}
-    COMMENT "生成 ${TARGET}.hex / ${TARGET}.bin,并打印内存占用"
+    COMMENT "输出 ${TARGET}.hex / ${TARGET}.bin 到 dist/,并打印内存占用"
 )
 
 # 便捷别名:cmake --build build --target firmware
