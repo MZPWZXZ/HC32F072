@@ -77,6 +77,18 @@ uint8_t bsp_uart0_is_ready(void)
 	return s_uart0_ready;
 }
 
+int bsp_uart0_get_char(uint8_t *ch)
+{
+	if (Uart_GetStatus(M0P_UART0, UartRC) != TRUE) {
+		return 0;   /* 暂无接收数据 */
+	}
+
+	/* 先清接收标志再取数(与官方例程一致),防止重复触发 */
+	Uart_ClrStatus(M0P_UART0, UartRC);
+	*ch = Uart_ReceiveData(M0P_UART0);
+	return 1;
+}
+
 void bsp_uart0_put_char(uint8_t ch)
 {
 	Uart_SendDataPoll(M0P_UART0, ch);

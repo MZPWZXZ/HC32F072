@@ -120,6 +120,7 @@ endfunction()
 hc32f072_add_firmware(hc32f072ka_boot
     ${SOURCE_DIR}/startup/hc32f072ka_boot.ld
     ${SOURCE_DIR}/bootloader/main.c
+    ${SOURCE_DIR}/bootloader/iap_proto.c
     ${SOURCE_DIR}/src/syscalls.c
 )
 

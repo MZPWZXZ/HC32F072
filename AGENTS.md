@@ -10,7 +10,11 @@
 - **板上未接外部晶振**:所有时钟源只能使用芯片内部 RC。
 - 系统主频方案:RCH(内部高速 RC)**4MHz × 12(PLL)= 48MHz**,
   HCLK = PCLK = 48MHz(1 分频),Flash 读等待 1 周期(>24MHz 必须 ≥1)。
-- 功能 demo:LED 周期闪烁 + UART0(115200-8-N-1)轮询打印启动信息。
+- **当前为 Bootloader 分支,双镜像结构**:
+  - `hc32f072ka_boot` Bootloader @0x00000000(32KB),串口 IAP 升级;
+  - `hc32f072ka_app` App @0x00008000(96KB),LED 闪烁 + UART0 打印,
+    串口输入 `boot`+回车进入引导;
+  - 上位机升级脚本 `tools/iap_upload.py`,协议见 `docs/iap_protocol.md`。
 - 工具链:GCC(arm-none-eabi-gcc)+ CMake,不使用任何 IDE 工程文件。
 
 ## 2. 目录结构
@@ -21,14 +25,17 @@
 ├── CHANGELOG.md             修改记录(每次修改必须登记)
 ├── THIRD_PARTY_NOTICES.md   第三方代码来源/许可登记
 ├── .gitattributes           统一 UTF-8 + LF
-├── CMakeLists.txt           顶层构建脚本
+├── CMakeLists.txt           顶层构建脚本(双镜像)
 ├── build.bat                Windows 一键构建脚本
-├── dist/                    烧录文件输出目录(hex/bin,自动生成,不入库)
+├── dist/                    烧录文件输出目录(boot/app 的 hex/bin,不入库)
 ├── cmake/                   CMake 交叉编译工具链文件
 ├── config/                  ddl_device.h(DDL 系列/封装配置)
-├── startup/                 GCC 启动文件 + 链接脚本
-├── src/                     应用代码(main.c、syscalls.c、bsp/)
+├── startup/                 GCC 启动文件 + boot/app 两份链接脚本
+├── src/                     App 源码(main.c、iap_shared.h、syscalls.c、bsp/)
 │   └── bsp/                 board.h 引脚配置与板级驱动
+├── bootloader/              Bootloader(main.c、iap_proto.{c,h})
+├── tools/iap_upload.py      IAP 上位机升级脚本
+├── docs/iap_protocol.md     串口 IAP 协议与升级说明
 └── third_party/             第三方代码(只读)
     ├── cmsis/               ARM CMSIS 5.9.0 core 头文件
     └── hc32f072_ddl/        官方 DDL Rev1.1.1 裁剪拷贝
@@ -57,15 +64,18 @@ cmake --build build
 > 参数:`clean` 清理、`release`/`minsize` 选择构建类型)。
 
 产物分两处存放(`dist/` 与 `build/` 同级,位于仓库根目录):
-`dist/` 下为烧录用 `hc32f072ka.hex` / `hc32f072ka.bin`,
-`build/` 下为调试用 `hc32f072ka.elf` 与 `hc32f072ka.map`。
+`dist/` 下为烧录用 `hc32f072ka_boot.hex/.bin` 与
+`hc32f072ka_app.hex/.bin`(Bootloader 与 App 各一组);
+`build/` 下为调试用对应 `.elf` 与 `.map`。
 
 **“测试没有问题”的定义**(本仓库开发期无法上电运行,以编译级验证为准):
 
-1. 编译、链接零错误;
-2. 应用代码 `src/` 零警告(已开 `-Wall -Wextra -Werror`);
-3. `*.map` 中 Flash/RAM 占用合理且无溢出(Flash 128KB / RAM 16KB);
-4. 若改动了链接脚本/启动文件,检查 `.hex` 起始地址与向量表。
+1. 编译、链接零错误(boot 与 app 两个目标);
+2. 应用代码 `src/`、`bootloader/` 零警告(已开 `-Wall -Wextra -Werror`);
+3. `*.map` 中 Flash/RAM 占用合理且无溢出(注意 RAM 运行区起点为
+   0x20000040,头部 0x40B 保留);
+4. 若改动了链接脚本/启动文件,检查 `.hex` 起始地址与向量表
+   (boot @0x0,app @0x8000)。
 
 ## 4. 硬性编码规范
 
@@ -108,4 +118,11 @@ cmake --build build
 - 修改 RCH 频率或使能 PLL 前,先把系统时钟切到内部低速 RCL
   (参见 `src/bsp/bsp_sysclk.c` 内注释的官方推荐流程);
 - RCH 属于 RC 振荡器,频率精度有限,串口长帧/高波特率需考虑误差;
+- **IAP/Flash**:
+  - 分区常量唯一来源是 `src/iap_shared.h`,改它必须同步改两份链接脚本;
+  - 擦除/编程前先 `Flash_Init(12, TRUE)`(48MHz 时间参数);
+  - HC32F072(>32KB)要求 Flash 擦写代码位于 0~32K——只能放在 Bootloader;
+  - 升级写盘“从尾到头”,向量表扇区最后写,中途失败可保留旧 App;
+  - RAM 0x20000000~0x3F 为 IAP 保留区,普通代码不得使用;
+  - 上位机与 `bootloader/iap_proto.h` 的协议常量必须两端同步。
 - 注释/日志中不得出现非 UTF-8 字符;字符串字面量含中文时确保源文件为 UTF-8。

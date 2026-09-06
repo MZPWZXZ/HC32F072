@@ -30,6 +30,16 @@ void bsp_uart0_init(void);
 uint8_t bsp_uart0_is_ready(void);
 
 /**
+ * \brief 非阻塞接收单字节
+ *
+ * 有数据时返回 1 并把字节写入 ch,无数据立即返回 0(轮询方式读取)。
+ *
+ * \param  ch 接收字节存放位置
+ * \return int 1:成功收到一字节;0:当前无数据
+ */
+int bsp_uart0_get_char(uint8_t *ch);
+
+/**
  * \brief 查询方式发送单字节
  *
  * \param  ch 待发送字节

@@ -69,6 +69,27 @@
 - 验证:双目标编译零错误零警告;boot hex 基址 0x0、app hex 基址 0x8000;
   size boot text 12740 / app text 12532。
 
+### 2026-09-06 [005] 串口 IAP 协议 + Bootloader/App/上位机
+
+- 目标:实现自定义串口协议完成 App 在线升级(Bootloader 分支第二步)。
+- 新增/改动:
+  - `bootloader/iap_proto.{c,h}`:协议实现——帧 MAGIC 0xAA + CMD + LEN +
+    CRC16-CCITT;命令 SYNC/WRITE(扇区擦→写→读回校验)/DONE(整镜像
+    CRC32 回读校验后跳转)/REBOOT;CRC32 与 Python binascii.crc32 一致;
+    写盘“从尾到头”,向量表扇区最后写,中断可保留旧 App;
+  - `bootloader/main.c`:接入协议轮询(250ms),停留时 LED 慢闪;
+  - `src/bsp/bsp_uart.{c,h}`:新增非阻塞 `bsp_uart0_get_char()`;
+  - `src/main.c`:改为 10ms 心跳循环,串口控制台支持 `boot` 命令
+    (置 IAP 魔数 @0x20000000 → NVIC_SystemReset 进引导);
+  - `tools/iap_upload.py`:上位机(pyserial)一键升级;
+  - `docs/iap_protocol.md`:协议/分区/使用说明;
+  - README.md、AGENTS.md 同步双镜像结构与 IAP 说明;
+  - CMakeLists.txt:Boot 目标加入 iap_proto.c。
+- 设计要点:Flash_Init(12)@48MHz;依据官方应用笔记,擦写代码位于 0~32K
+  由 Bootloader 镜像天然满足;每扇区幂等可重试。
+- 验证:双目标编译零错误零警告(boot/app);`python -m py_compile` 检查
+  上位机脚本语法通过;升级流程为编译级验证(无硬件,真机联调留待上板)。
+
 ### 2026-09-06 [003] 编译产物 hex/bin 改输出到根目录 dist(与 build 同级)
 
 - 需求:希望新建 `dist/` 文件夹专门存放编译后的 bin/hex,与 `build/` 同级。
