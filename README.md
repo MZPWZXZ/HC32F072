@@ -28,6 +28,11 @@ cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi-gcc.cmake `
 cmake --build build
 ```
 
+> **Windows 一键编译**:直接双击或运行根目录的 `build.bat`
+> (自动探测 cmake / mingw32-make / arm-none-eabi-gcc,无需手敲命令)。
+> 可用参数:`build.bat`(Debug)、`build.bat release`(-O2)、
+> `build.bat minsize`(-Os)、`build.bat clean`(清理 build 目录)。
+
 构建产物位于 `build/`:
 
 | 文件 | 说明 |
@@ -64,6 +69,7 @@ cmake --build build
 ├── AGENTS.md                开发纪律(Agent 与协作者必读)
 ├── CHANGELOG.md             修改记录
 ├── CMakeLists.txt           顶层构建
+├── build.bat                Windows 一键构建脚本
 ├── cmake/                   GCC 交叉工具链文件
 ├── config/ddl_device.h      DDL 系列/封装定义
 ├── startup/                 GCC 启动文件与链接脚本(128K Flash/16K RAM)

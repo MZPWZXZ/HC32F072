@@ -29,3 +29,20 @@
   LQFP64 置为 `HC32F072Kxxx`(DDL 允许的用户配置项)。
 - 验证:arm-none-eabi-gcc 15.3 + CMake 4.4 交叉编译通过,
   应用代码 `-Wall -Wextra -Werror` 零警告;查看 map 确认内存无溢出。
+
+### 2026-09-06 [002] 新增 Windows 一键构建脚本 build.bat
+
+- 需求:希望直接运行 .bat 即可完成编译,不用手敲 cmake 命令。
+- 新增文件:
+  - `build.bat`:自动探测 cmake / mingw32-make / arm-none-eabi-gcc
+    (优先环境变量 `HC32F072_CMAKE`/`HC32F072_MAKE`,其次 PATH,
+    最后本机 C:\Program Files\UserApp 目录),然后配置并构建;
+  - 参数:`build.bat` = Debug,`build.bat release` = Release(-O2),
+    `build.bat minsize` = MinSizeRel(-Os),`build.bat clean` = 删除 build 目录;
+  - 注意:脚本刻意只用 ASCII 字符,保证任意系统代码页下可运行;
+    采用仓库统一的 LF 行尾(经实测 cmd.exe 可正常执行)。
+- 文档同步:AGENTS.md、README.md 的目录结构加入 build.bat,并在
+  “构建与验证/快速开始”补充一键用法。
+- 验证:在 PowerShell 中执行 `cmd /c build.bat clean`(清理成功)与
+  `cmd /c build.bat`(配置+全量编译 exit=0,产物 elf/hex/bin/map 生成,
+  size: text 12532 / data 84 / bss 336),均通过。
