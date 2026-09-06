@@ -1,0 +1,27 @@
+# 文本文件统一行尾为 LF(仓库内与检出均为 LF),兼容 Linux 开发环境
+* text=auto eol=lf
+*.c    text eol=lf
+*.h    text eol=lf
+*.S    text eol=lf
+*.ld   text eol=lf
+*.txt  text eol=lf
+*.md   text eol=lf
+*.cmake text eol=lf
+*.sh   text eol=lf
+*.ps1  text eol=lf
+*.json text eol=lf
+*.py   text eol=lf
+*.svg  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# 二进制/固件产物按二进制处理,不做行尾/编码转换
+*.bin   binary
+*.elf   binary
+*.o     binary
+*.axf   binary
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.rar   binary
+*.zip   binary
