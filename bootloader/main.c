@@ -9,8 +9,8 @@
  *   3. 否则若 App 区向量表合法,直接跳转到 App;
  *   4. 否则(无 App/App 非法)停留在 Bootloader。
  *
- * 停留期间:LED 慢闪提示;轮询处理上位机 IAP 帧(见 iap_proto 模块),
- * 收到合法新 App 后自动跳转运行。
+ * 停留期间:LED 慢闪提示;轮询处理主机(上位)发来的 IAP 帧
+ * (见 iap_proto 模块),收到合法新 App 后自动跳转运行。
  */
 #include "bsp_led.h"
 #include "bsp_sysclk.h"
@@ -58,7 +58,7 @@ static void boot_print_banner(void)
 			 (unsigned int)SystemCoreClock);
 	bsp_uart0_printf(" UART0    : %u bps 8N1\r\n",
 			 (unsigned int)BSP_UART0_BAUDRATE);
-	bsp_uart0_write(" 等待上位机 IAP 帧(SYNC/WRITE/DONE)...\r\n");
+	bsp_uart0_write(" 等待主机 IAP 帧(SYNC/WRITE/DONE)...\r\n");
 	bsp_uart0_write("========================================\r\n");
 }
 

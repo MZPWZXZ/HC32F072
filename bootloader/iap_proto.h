@@ -2,7 +2,8 @@
  * \file iap_proto.h
  * \brief 串口 IAP 自定义协议模块(帧格式/命令定义)
  *
- * 协议与上位机 tools/iap_upload.py 严格对应,修改时两端必须同步。
+ * 协议为开放规范,详见 docs/iap_protocol.md;主机侧实现(串口工具/脚本)
+ * 必须与本文件保持一致,两端同步修改。
  * 帧格式(共 max 522 字节):
  *   [0]      MAGIC   = 0xAA
  *   [1]      CMD

@@ -90,6 +90,22 @@
 - 验证:双目标编译零错误零警告(boot/app);`python -m py_compile` 检查
   上位机脚本语法通过;升级流程为编译级验证(无硬件,真机联调留待上板)。
 
+### 2026-09-06 [006] 删除上位机软件相关代码与说明
+
+- 需求:仓库不需要包含上位机软件相关内容,如有立即删除。
+- 删除/改动:
+  - 删除 `tools/iap_upload.py`(Python/pyserial 上位机)及整个 `tools/` 目录;
+  - `docs/iap_protocol.md`:改写为纯设备端规范(帧格式/命令/固件行为),
+    移除 pip/上位机脚本使用说明,明确“仓库不含上位机,主机按帧格式实现”;
+  - `bootloader/iap_proto.h`:注释去掉对 tools 脚本的引用;
+  - `bootloader/iap_proto.c`/`main.c`:去掉 Python/上位机字样的注释;
+  - `README.md`、`AGENTS.md`:移除 tools 目录树条目与上位机脚本说明,
+    “上位机”表述改为“主机(按协议自行实现)”;
+  - `.gitignore`:移除 __pycache__/*.pyc 等 Python 规则;
+  - CHANGELOG [005] 保留历史记录(不修改历史提交)。
+- 验证:删除后重新编译双镜像零错误零警告;grep 全库无 `iap_upload`/
+  `pyserial`/`tools/` 残留。
+
 ### 2026-09-06 [003] 编译产物 hex/bin 改输出到根目录 dist(与 build 同级)
 
 - 需求:希望新建 `dist/` 文件夹专门存放编译后的 bin/hex,与 `build/` 同级。

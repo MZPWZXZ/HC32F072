@@ -15,8 +15,8 @@
   - `hc32f072ka_app` **App @0x00008000(96KB)**:
     LED 周期闪烁 + UART0 打印,串口输入 `boot` + 回车进入引导
 - 串口 IAP:自定义二进制协议(帧 CRC16 + 整镜像 CRC32 校验),扇区级
-  擦写、读回校验、断点可重试,详见 `docs/iap_protocol.md`
-- 上位机:`tools/iap_upload.py`(Python + pyserial)一键升级
+  擦写、读回校验、断点可重试,协议见 `docs/iap_protocol.md`(仓库不含上位机
+  程序,主机侧按协议自行实现)
 - 构建:CMake + arm-none-eabi-gcc,产物 dist(hex/bin)与 build(elf/map)
 - 风格:Linux 内核编程风格、Doxygen 注释、UTF-8 + LF
 
@@ -50,14 +50,12 @@ build.bat            # 或:build.bat clean / release / minsize
 
 ## 串口升级(IAP)
 
-```sh
-pip install pyserial
-python tools/iap_upload.py -p COM5 dist/hc32f072ka_app.bin
-```
-
-- App 运行中:上位机自动发 `boot` 命令触发软复位进入引导;
-- 也可手动在 App 串口输入 `boot` + 回车,再运行上位机;
-- App 区非法/为空时,Bootloader 复位后自动停留在引导模式,直接升级即可。
+1. App 运行中在串口输入 `boot` + 回车(或 App 区非法/为空时复位,自动停留
+   引导模式);
+2. Bootloader 进入引导后等待主机 IAP 帧(SYNC/WRITE/DONE),串口
+   115200-8-N-1;
+3. 主机侧按 `docs/iap_protocol.md` 的帧格式完成升级(仓库不内置上位机
+   程序);Bootloader 校验通过后自动跳转新 App。
 
 协议细节、失败恢复见 `docs/iap_protocol.md`。
 
@@ -65,7 +63,7 @@ python tools/iap_upload.py -p COM5 dist/hc32f072ka_app.bin
 
 LED 与串口引脚集中在 `src/bsp/board.h`(默认 UART0 = PA09/PA10 AF1,
 LED = PC13 占位),按实际原理图修改即可。Bootloader 与 App 共用同一份
-板级配置;若两者使用不同引脚/波特率,请分别调整(需同时改上位机参数)。
+板级配置;若两者使用不同引脚/波特率,请分别调整(需同步改主机侧参数)。
 
 ## 目录结构
 
@@ -81,7 +79,6 @@ LED = PC13 占位),按实际原理图修改即可。Bootloader 与 App 共用同
 ├── src/                     App 源码(main、bsp、iap_shared.h、syscalls)
 │   └── bsp/                 board.h、bsp_sysclk/bsp_uart/bsp_led
 ├── bootloader/              Bootloader(main + iap_proto 协议模块)
-├── tools/iap_upload.py      IAP 上位机升级脚本
 ├── docs/iap_protocol.md     串口 IAP 协议与升级说明
 └── third_party/             第三方(只读)
     ├── cmsis/               ARM CMSIS 5.9.0

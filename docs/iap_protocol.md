@@ -1,8 +1,12 @@
-# 串口 IAP 协议与使用说明
+# 串口 IAP 协议说明
 
 HC32F072KA Bootloader 分支:上电先运行 Bootloader(32KB @0x00000000),
 App 位于 0x00008000(96KB)。App 运行中输入 `boot` + 回车即软复位进入
-Bootloader,等待上位机通过串口升级固件。
+Bootloader,等待主机通过串口按其帧格式完成固件升级。
+
+> 说明:本仓库只包含设备端(Bootloader/App)代码,不内置上位机程序。
+> 需要升级时,主机侧按本文档第 3 节的帧格式自行实现(或用支持
+> 二进制收发与 CRC 的串口工具/脚本)。
 
 ## 1. Flash 分区与镜像
 
@@ -45,34 +49,27 @@ RAM 前 64B(0x20000000~0x2000003F)保留:0x20000000 存放 IAP 魔数
 | --- | --- | --- | --- |
 | SYNC | 0x01 | 空 | 握手,引导就绪后回 ACK |
 | WRITE | 0x03 | offset:u32 + 512B 扇区数据 | 擦除该扇区→编程→读回校验,ACK/NAK |
-| DONE | 0x04 | size:u32 + crc32:u32 | 回读整镜像校验 CRC32(IEEE,与 Python `binascii.crc32` 一致),通过则跳转 App |
+| DONE | 0x04 | size:u32 + crc32:u32 | 回读整镜像校验 CRC32(IEEE/zlib 标准),通过则跳转 App |
 | REBOOT | 0x05 | 空 | 不校验直接跳转 App |
 
 整帧最长 522 字节(WRITE 帧)。
 
-## 4. 升级流程
+## 4. 固件侧升级行为(供主机参考)
 
 1. 先保证 Bootloader 已烧入(0x0,SWD 烧 `dist/hc32f072ka_boot.hex`);
 2. App 运行中输入 `boot` + 回车(或 App 区非法时复位自动停留引导);
-3. 主机执行:
+3. 主机流程建议:SYNC 握手 → 按**从尾到头**逐扇区 WRITE(向量表扇区
+   最后写,中途断电/失败可保留旧 App)→ DONE(镜像长度 + 整镜像 CRC32)
+   → Bootloader 回读校验 → 自动跳转新 App。
 
-```sh
-pip install pyserial            # 首次需要
-python tools/iap_upload.py -p COM5 dist/hc32f072ka_app.bin
-```
-
-上位机动作:发 `boot\r`(可选 `--no-boot` 跳过)→ SYNC 握手 →
-按**从尾到头**逐扇区 WRITE(向量表扇区最后写,中途断电/失败可保留旧 App)
-→ DONE(长度 + 整镜像 CRC32)→ Bootloader 回读校验 → 自动跳转新 App。
-
-## 5. 失败与恢复
+## 5. 失败与恢复(固件侧行为)
 
 - 串口无响应:确认已进入 Bootloader(App 里输 `boot`;App 非法/为空时复位
-  自动停留);检查 COM 口与波特率;
-- WRITE 返回 NAK:上位机自动重试 3 次(每扇区擦后重写,幂等),仍失败请
-  检查供电/接线后重跑;
+  自动停留);检查串口与波特率是否 115200-8-N-1;
+- WRITE 收到 NAK:该扇区“擦→写→校验”失败,主机可重发同一扇区
+  (每扇区幂等,擦后重写);仍失败请检查供电/接线;
 - DONE 校验失败:旧 App(向量扇区未被覆盖时)仍可运行,重新执行升级即可;
-- 想强行走引导:App 内再输 `boot`,或按住复位重试进入时机。
+- 想强行走引导:App 内再输 `boot`,或复位后重新进入。
 
 ## 6. 关键源文件
 
@@ -81,5 +78,4 @@ python tools/iap_upload.py -p COM5 dist/hc32f072ka_app.bin
 | `src/iap_shared.h` | 分区/魔数/扇区等共享常量(两端唯一事实来源) |
 | `bootloader/iap_proto.{h,c}` | Bootloader 侧协议/Flash 驱动封装 |
 | `src/main.c` | App 控制台 `boot` 命令 |
-| `tools/iap_upload.py` | 上位机升级脚本 |
 | `startup/hc32f072ka_{boot,app}.ld` | 两镜像链接脚本 |

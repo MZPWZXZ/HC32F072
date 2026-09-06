@@ -71,7 +71,7 @@ static uint16_t iap_crc16(const uint8_t *data, uint32_t len)
 }
 
 /**
- * \brief CRC32(IEEE,zlib 兼容,与 Python binascii.crc32 一致)
+ * \brief CRC32(IEEE/zlib 标准)
  *
  * \param  data 数据指针
  * \param  len  字节数

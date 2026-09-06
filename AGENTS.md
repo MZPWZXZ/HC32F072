@@ -14,7 +14,8 @@
   - `hc32f072ka_boot` Bootloader @0x00000000(32KB),串口 IAP 升级;
   - `hc32f072ka_app` App @0x00008000(96KB),LED 闪烁 + UART0 打印,
     串口输入 `boot`+回车进入引导;
-  - 上位机升级脚本 `tools/iap_upload.py`,协议见 `docs/iap_protocol.md`。
+  - 串口 IAP 升级:仓库不含上位机程序,主机侧按 `docs/iap_protocol.md`
+    的帧格式自行实现。
 - 工具链:GCC(arm-none-eabi-gcc)+ CMake,不使用任何 IDE 工程文件。
 
 ## 2. 目录结构
@@ -34,7 +35,6 @@
 ├── src/                     App 源码(main.c、iap_shared.h、syscalls.c、bsp/)
 │   └── bsp/                 board.h 引脚配置与板级驱动
 ├── bootloader/              Bootloader(main.c、iap_proto.{c,h})
-├── tools/iap_upload.py      IAP 上位机升级脚本
 ├── docs/iap_protocol.md     串口 IAP 协议与升级说明
 └── third_party/             第三方代码(只读)
     ├── cmsis/               ARM CMSIS 5.9.0 core 头文件
@@ -124,5 +124,5 @@ cmake --build build
   - HC32F072(>32KB)要求 Flash 擦写代码位于 0~32K——只能放在 Bootloader;
   - 升级写盘“从尾到头”,向量表扇区最后写,中途失败可保留旧 App;
   - RAM 0x20000000~0x3F 为 IAP 保留区,普通代码不得使用;
-  - 上位机与 `bootloader/iap_proto.h` 的协议常量必须两端同步。
+  - 主机侧协议实现与 `bootloader/iap_proto.h` 的常量必须保持同步;
 - 注释/日志中不得出现非 UTF-8 字符;字符串字面量含中文时确保源文件为 UTF-8。
